@@ -2,13 +2,13 @@ use std::io;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
-    DefaultTerminal, Frame,
     buffer::Buffer,
     layout::Rect,
     style::Stylize,
     symbols::border,
     text::{Line, Text},
     widgets::{Block, Paragraph, Widget},
+    DefaultTerminal, Frame,
 };
 
 use game_of_life::{CellState, Grid};
@@ -54,8 +54,6 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
-            // KeyCode::Left => self.decrement_counter(),
-            // KeyCode::Right => self.increment_counter(),
             _ => self.cycle(),
         }
     }
@@ -72,7 +70,12 @@ impl App {
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Line::from(" Game of Life ".bold());
-        let instructions = Line::from(vec![" Quit ".into(), "<Q> ".blue().bold()]);
+        let instructions = Line::from(vec![
+            " Quit ".into(),
+            "<Q> ".blue().bold(),
+            " Run Cycle".into(),
+            "<ANY>".blue().bold(),
+        ]);
         let block = Block::bordered()
             .title(title.centered())
             .title_bottom(instructions.centered())
