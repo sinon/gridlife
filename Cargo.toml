@@ -1,0 +1,9 @@
+[package]
+name = "game-of-life"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossterm = "0.28.1"
+rand = "0.8.5"
+ratatui = "0.29.0"
