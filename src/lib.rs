@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Index},
 };
 
-use rand::{Rng, distributions::Standard, prelude::Distribution};
+use rand::{distributions::Standard, prelude::Distribution, Rng};
 
 type Coord = i32;
 
@@ -169,16 +169,12 @@ impl Grid<CellState> {
         NeighbourState { alive, dead }
     }
 
-    fn get_neighbours(&self, point: Point) -> impl Iterator<Item = Point> {
+    fn get_neighbours(&self, point: Point) -> impl Iterator<Item = Point> + use<'_> {
         ORTHO_PLUS_DIR
             .into_iter()
             .map(move |d| point + d)
             .filter(|p| self.contains(p))
     }
-
-    // fn to_string() -> String {
-
-    // }
 }
 
 impl Default for Grid<CellState> {
