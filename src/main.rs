@@ -187,6 +187,16 @@ mod tests {
         app.handle_key_event(KeyCode::Char('q').into());
         assert!(app.exit);
 
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Char('r').into());
+        assert!(app.run);
+        app.handle_key_event(KeyCode::Char('s').into());
+        assert!(!app.run);
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Char('?').into());
+        // assert!(app.population != 0);
+        assert!(app.cycles == 0);
+
         Ok(())
     }
 }
