@@ -72,8 +72,7 @@ impl Distribution<CellState> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CellState {
         match rng.gen_range(0..=1) {
             0 => CellState::Alive,
-            1 => CellState::Dead,
-            _ => CellState::Alive,
+            _ => CellState::Dead,
         }
     }
 }
@@ -249,6 +248,30 @@ mod tests {
         let state = g.get_neighbours_state(Point { x: 0, y: 0 });
         assert_eq!(state.dead, 2);
         assert_eq!(state.alive, 1);
+    }
+
+    #[test]
+    fn test_get_neighbours_state_unknown_point() {
+        let g = Grid::new_empty(3, 3);
+        let state = g.get_neighbours_state(Point { x: 5, y: 5 });
+        assert_eq!(state.dead, 0);
+        assert_eq!(state.alive, 0);
+    }
+
+    #[test]
+    fn test_grid_display() {
+        let mut g = Grid::new_empty(3, 3);
+        g.cells[4] = CellState::Alive;
+        let s = format!("{}", g);
+        assert_eq!(s, "💀💀💀\n💀😇💀\n💀💀💀\n".to_string());
+    }
+
+    #[test]
+    fn test_grid_debug() {
+        let mut g = Grid::new_empty(3, 3);
+        g.cells[4] = CellState::Alive;
+        let s = format!("{:?}", g);
+        assert_eq!(s, "Grid { width: 3, height: 3, cells: [Dead, Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead] }".to_string());
     }
 
     #[test]
