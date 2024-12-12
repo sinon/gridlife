@@ -165,7 +165,7 @@ impl Grid<CellState> {
             (CellState::Alive, 2..=3) => CellState::Alive,
             (CellState::Alive, 4..=8) => CellState::Dead,
             (CellState::Dead, 3) => CellState::Alive,
-            (_, _) => cell.clone(),
+            (_, _) => *cell,
         }
     }
     fn get_neighbours_state(&self, point: Point) -> NeighbourState {
