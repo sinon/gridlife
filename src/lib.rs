@@ -123,6 +123,16 @@ impl<T> Index<Point> for Grid<T> {
 }
 
 impl Grid<CellState> {
+    pub fn new_empty(width: usize, height: usize) -> Self {
+        let size = width * height;
+        let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead).collect();
+        Grid {
+            width,
+            height,
+            cells,
+        }
+    }
+
     pub fn new_random(width: usize, height: usize) -> Self {
         let size = width * height;
         let cells: Vec<CellState> = (0..size).map(|_| rand::random()).collect();
@@ -138,7 +148,7 @@ impl Grid<CellState> {
     Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
     Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
      */
-    pub fn update_states(&mut self) {
+    pub fn update_states(&mut self) -> u32 {
         let mut new_grid: Vec<CellState> = Vec::new();
         for (idx, &cell) in self.cells.iter().enumerate() {
             let state = self.get_neighbours_state(self.pos(idx));
@@ -151,6 +161,10 @@ impl Grid<CellState> {
             }
         }
         self.cells = new_grid;
+        self.cells
+            .iter()
+            .filter(|&&c| c == CellState::Alive)
+            .count() as u32
     }
     fn get_neighbours_state(&self, point: Point) -> NeighbourState {
         let mut alive = 0;
@@ -179,7 +193,7 @@ impl Grid<CellState> {
 
 impl Default for Grid<CellState> {
     fn default() -> Self {
-        Grid::new_random(10, 10)
+        Grid::new_empty(10, 10)
     }
 }
 
