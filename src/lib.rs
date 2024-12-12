@@ -70,9 +70,7 @@ impl Display for CellState {
 
 impl Distribution<CellState> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CellState {
-        // match rng.gen_range(0, 3) { // rand 0.5, 0.6, 0.7
         match rng.gen_range(0..=1) {
-            // rand 0.8
             0 => CellState::Alive,
             1 => CellState::Dead,
             _ => CellState::Alive,
@@ -142,29 +140,33 @@ impl Grid<CellState> {
             cells,
         }
     }
-    /*
-    Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
-    Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
-    Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
-    Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
-     */
     pub fn update_states(&mut self) -> u32 {
         let mut new_grid: Vec<CellState> = Vec::new();
         for (idx, &cell) in self.cells.iter().enumerate() {
             let state = self.get_neighbours_state(self.pos(idx));
-            match (&cell, state.alive) {
-                (CellState::Alive, 0..=1) => new_grid.push(CellState::Dead),
-                (CellState::Alive, 2..=3) => new_grid.push(CellState::Alive),
-                (CellState::Alive, 4..=8) => new_grid.push(CellState::Dead),
-                (CellState::Dead, 3) => new_grid.push(CellState::Alive),
-                (_, _) => new_grid.push(cell),
-            }
+            let cellstate = self.get_cell_state(&cell, state);
+            new_grid.push(cellstate);
         }
         self.cells = new_grid;
         self.cells
             .iter()
             .filter(|&&c| c == CellState::Alive)
             .count() as u32
+    }
+    /*
+    Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
+    Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
+    Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
+    Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
+     */
+    fn get_cell_state(&self, cell: &CellState, state: NeighbourState) -> CellState {
+        match (&cell, state.alive) {
+            (CellState::Alive, 0..=1) => CellState::Dead,
+            (CellState::Alive, 2..=3) => CellState::Alive,
+            (CellState::Alive, 4..=8) => CellState::Dead,
+            (CellState::Dead, 3) => CellState::Alive,
+            (_, _) => cell.clone(),
+        }
     }
     fn get_neighbours_state(&self, point: Point) -> NeighbourState {
         let mut alive = 0;
@@ -218,5 +220,65 @@ impl<T: Debug> Grid<T> {
                 &self.cells[row * self.width..(row + 1) * self.width]
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grid_try_get() {
+        let g = Grid::new_empty(0, 0);
+        assert!(g.try_get(Point { x: 10, y: 10 }) == None);
+    }
+
+    #[test]
+    fn test_grid_new_random() {
+        let rand_g = Grid::new_random(10, 10);
+        assert_eq!(rand_g.cells.len(), 100);
+    }
+
+    #[test]
+    fn test_get_neighbours_state() {
+        let mut g = Grid::new_empty(3, 3);
+        g.cells[1] = CellState::Alive;
+        // x 0 x
+        // x x x
+        // x x x
+        let state = g.get_neighbours_state(Point { x: 0, y: 0 });
+        assert_eq!(state.dead, 2);
+        assert_eq!(state.alive, 1);
+    }
+
+    #[test]
+    fn test_update_state() {
+        let mut g = Grid::new_random(10, 10);
+        g.update_states();
+    }
+
+    #[test]
+    fn test_get_cell_state() {
+        let g = Grid::new_empty(3, 3);
+        // Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
+        assert_eq!(
+            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 1, dead: 0 }),
+            CellState::Dead
+        );
+        //Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
+        assert_eq!(
+            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 3, dead: 0 }),
+            CellState::Alive
+        );
+        // Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
+        assert_eq!(
+            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 5, dead: 1 }),
+            CellState::Dead
+        );
+        // Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
+        assert_eq!(
+            g.get_cell_state(&CellState::Dead, NeighbourState { alive: 3, dead: 0 }),
+            CellState::Alive
+        );
     }
 }
