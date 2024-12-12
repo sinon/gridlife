@@ -123,6 +123,16 @@ impl<T> Index<Point> for Grid<T> {
 }
 
 impl Grid<CellState> {
+    pub fn new_empty(width: usize, height: usize) -> Self {
+        let size = width * height;
+        let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead).collect();
+        Grid {
+            width,
+            height,
+            cells,
+        }
+    }
+
     pub fn new_random(width: usize, height: usize) -> Self {
         let size = width * height;
         let cells: Vec<CellState> = (0..size).map(|_| rand::random()).collect();
@@ -183,7 +193,7 @@ impl Grid<CellState> {
 
 impl Default for Grid<CellState> {
     fn default() -> Self {
-        Grid::new_random(10, 10)
+        Grid::new_empty(10, 10)
     }
 }
 

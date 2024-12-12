@@ -26,7 +26,7 @@ pub struct App {
 
 impl App {
     pub fn new(height: usize, width: usize) -> Self {
-        let mut grid = Grid::new_random(width, height);
+        let mut grid = Grid::new_empty(width, height);
         let population = grid.update_states();
         App {
             grid,
@@ -136,4 +136,57 @@ fn main() -> io::Result<()> {
     let app_result = App::new(s.height as usize - 1, s.width as usize - 1).run(&mut terminal);
     ratatui::restore();
     app_result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::style::Style;
+
+    #[test]
+    fn render() {
+        let app = App::default();
+        let mut buf = Buffer::empty(Rect::new(0, 0, 100, 4));
+
+        app.render(buf.area, &mut buf);
+        let mut expected = Buffer::with_lines(vec![
+        "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Game of Life ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓",
+        "┃💀💀💀💀💀💀💀💀💀💀                                                                              ┃",
+        "┃💀💀💀💀💀💀💀💀💀💀                                                                              ┃",
+        "┗━━━━━━━━━ Quit <Q>  Run<r> Stop<s> Single Cycle<n> Regenerate<?> Population: 0 Cycles: 0 ━━━━━━━━━┛",
+        ]);
+        let title_style = Style::new().bold();
+        let counter_style = Style::new().red().bold();
+        let key_style = Style::new().blue().bold();
+        // Game of Life
+        expected.set_style(Rect::new(43, 0, 14, 1), title_style);
+        // <Q>
+        expected.set_style(Rect::new(16, 3, 4, 1), key_style);
+        // <r>
+        expected.set_style(Rect::new(24, 3, 3, 1), key_style);
+        //<s>
+        expected.set_style(Rect::new(32, 3, 3, 1), key_style);
+        //<n>
+        expected.set_style(Rect::new(48, 3, 3, 1), key_style);
+        //<?>
+        expected.set_style(Rect::new(62, 3, 3, 1), key_style);
+        // 0
+        expected.set_style(Rect::new(78, 3, 1, 1), counter_style);
+        // 0
+        expected.set_style(Rect::new(88, 3, 2, 1), counter_style);
+        assert_eq!(buf, expected);
+    }
+
+    #[test]
+    fn handle_key_event() -> io::Result<()> {
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Char('n').into());
+        assert_eq!(app.cycles, 1);
+
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Char('q').into());
+        assert!(app.exit);
+
+        Ok(())
+    }
 }
