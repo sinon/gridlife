@@ -3,8 +3,6 @@ use std::{
     ops::{Add, Index},
 };
 
-use rand::{distributions::Standard, prelude::Distribution, Rng};
-
 type Coord = i32;
 
 pub const NORTH: Point = Point::new(0, -1);
@@ -68,15 +66,6 @@ impl Display for CellState {
     }
 }
 
-impl Distribution<CellState> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CellState {
-        match rng.gen_range(0..=1) {
-            0 => CellState::Alive,
-            _ => CellState::Dead,
-        }
-    }
-}
-
 #[derive(PartialEq, Clone, Copy, Debug)]
 struct NeighbourState {
     dead: i32,
@@ -132,7 +121,15 @@ impl Grid<CellState> {
 
     pub fn new_random(width: usize, height: usize) -> Self {
         let size = width * height;
-        let cells: Vec<CellState> = (0..size).map(|_| rand::random()).collect();
+        let cells: Vec<CellState> = (0..size)
+            .map(|_| {
+                if fastrand::bool() {
+                    CellState::Alive
+                } else {
+                    CellState::Dead
+                }
+            })
+            .collect();
         Grid {
             width,
             height,
