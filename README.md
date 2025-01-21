@@ -6,6 +6,6 @@ Written in Rust using Ratatui for the Text User Interface (TUI).
 
 ## Run
 
-`cargo run`
+`cargo run --features="build-binary"`
 
 <img width="1418" alt="image" src="https://github.com/user-attachments/assets/10764a6e-b0c4-47a3-afcf-1e12c6da0b8e" />
