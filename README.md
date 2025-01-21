@@ -4,8 +4,8 @@ Implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%2
 
 Written in Rust using Ratatui for the Text User Interface (TUI).
 
-## Run
+## Run TUI
 
-`cargo run`
+`cargo run --features="build-binary"`
 
-<img width="1418" alt="image" src="https://github.com/user-attachments/assets/10764a6e-b0c4-47a3-afcf-1e12c6da0b8e" />
+<img width="1200" alt="image" src="https://github.com/user-attachments/assets/63ff7fc7-5d7f-447a-a9de-496dbe611fcd" />

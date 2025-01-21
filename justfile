@@ -12,3 +12,6 @@ test:
     cargo nextest run --all-targets --no-fail-fast
 
 t:test
+
+run:
+    cargo run --features="build-binary"

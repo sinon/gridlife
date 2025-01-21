@@ -30,7 +30,7 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
       - name: cargo test --locked
-        run: cargo test --locked --all-features --all-targets
+        run: cargo test --all-features --all-targets
       # https://github.com/rust-lang/cargo/issues/6669
       - name: cargo test --doc
         run: cargo test --locked --all-features --doc

@@ -1,3 +1,9 @@
+#![warn(missing_docs)]
+//! Game of Life
+//!
+//! Library to manage the grid state for Conways game of life.
+//!
+//! See: <https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life>
 use std::{
     fmt::{self, Debug, Display},
     ops::{Add, Index},
@@ -5,24 +11,23 @@ use std::{
 
 type Coord = i32;
 
-pub const NORTH: Point = Point::new(0, -1);
-pub const NORTH_EAST: Point = Point::new(1, -1);
-pub const EAST: Point = Point::new(1, 0);
-pub const SOUTH_EAST: Point = Point::new(1, 1);
-pub const SOUTH: Point = Point::new(0, 1);
-pub const SOUTH_WEST: Point = Point::new(-1, 1);
-pub const WEST: Point = Point::new(-1, 0);
-pub const NORTH_WEST: Point = Point::new(-1, -1);
+const NORTH: Point = Point::new(0, -1);
+const NORTH_EAST: Point = Point::new(1, -1);
+const EAST: Point = Point::new(1, 0);
+const SOUTH_EAST: Point = Point::new(1, 1);
+const SOUTH: Point = Point::new(0, 1);
+const SOUTH_WEST: Point = Point::new(-1, 1);
+const WEST: Point = Point::new(-1, 0);
+const NORTH_WEST: Point = Point::new(-1, -1);
 
-pub const ORTHO_DIR: [Point; 4] = [NORTH, SOUTH, WEST, EAST];
-pub const ORTHO_PLUS_DIR: [Point; 8] = [
+const ORTHO_PLUS_DIR: [Point; 8] = [
     NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct Point {
-    pub x: Coord,
-    pub y: Coord,
+struct Point {
+    x: Coord,
+    y: Coord,
 }
 impl AsRef<Point> for Point {
     fn as_ref(&self) -> &Self {
@@ -48,18 +53,21 @@ impl Point {
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+/// `CellState` models whether a cell has an alive or dead population
 pub enum CellState {
-    Alive,
-    Dead,
+    /// `Alive` with a `char` to be rendered
+    Alive(char),
+    /// `Dead` with a `char` to be rendered
+    Dead(char),
 }
 impl Display for CellState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CellState::Dead => {
-                write!(f, "💀")?;
+            CellState::Dead(c) => {
+                write!(f, "{c}")?;
             }
-            CellState::Alive => {
-                write!(f, "😇")?;
+            CellState::Alive(c) => {
+                write!(f, "{c}")?;
             }
         }
         Ok(())
@@ -72,14 +80,22 @@ struct NeighbourState {
     alive: i32,
 }
 #[derive(Debug)]
+/// `Grid` holds the state for a Conways game of life
 pub struct Grid<T> {
+    /// The `width` of the grid to be created
     pub width: usize,
+    /// The `height` of the grid to be created
     pub height: usize,
+    /// The state of the grid in terms of what cells are alive and dead in automaton
     pub cells: Vec<T>,
+    /// What character glyph should be used to display a dead population
+    pub dead_glyph: char,
+    /// What character glyph should be used to display an alive population
+    pub alive_glyph: char,
 }
 
 impl<T> Grid<T> {
-    pub fn contains(&self, p: &Point) -> bool {
+    fn contains(&self, p: &Point) -> bool {
         p.x >= 0 && (p.x as usize) < self.width && p.y >= 0 && (p.y as usize) < self.height
     }
 
@@ -90,7 +106,7 @@ impl<T> Grid<T> {
         ((self.width as i32) * p.y + p.x) as usize
     }
 
-    pub fn try_get<U: AsRef<Point>>(&self, p: U) -> Option<&T> {
+    fn try_get<U: AsRef<Point>>(&self, p: U) -> Option<&T> {
         if self.contains(p.as_ref()) {
             Some(&self[*p.as_ref()])
         } else {
@@ -109,33 +125,63 @@ impl<T> Index<Point> for Grid<T> {
 }
 
 impl Grid<CellState> {
+    /// Create a new `Grid` of a given `width` and `height`.
+    /// It will default to `X` for alive glyph and ` ` for dead glyph
     pub fn new_empty(width: usize, height: usize) -> Self {
         let size = width * height;
-        let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead).collect();
+        let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead(' ')).collect();
         Grid {
             width,
             height,
             cells,
+            ..Default::default()
         }
     }
 
-    pub fn new_random(width: usize, height: usize) -> Self {
-        let size = width * height;
-        let cells: Vec<CellState> = (0..size)
+    fn generate_random_cells(size: usize, alive_glyph: char, dead_glyph: char) -> Vec<CellState> {
+        (0..size)
             .map(|_| {
                 if fastrand::bool() {
-                    CellState::Alive
+                    CellState::Alive(alive_glyph)
                 } else {
-                    CellState::Dead
+                    CellState::Dead(dead_glyph)
                 }
             })
-            .collect();
+            .collect()
+    }
+    /// Generate a new `Grid` of a given `width` and `height`
+    /// It will be populated with a random distribution of Alive/Dead cells
+    /// The default glyphs of `X` for alive and ` ` for dead.
+    pub fn new_random(width: usize, height: usize) -> Self {
+        let default = Self::default();
+        let cells: Vec<CellState> =
+            Self::generate_random_cells(width * height, default.alive_glyph, default.dead_glyph);
         Grid {
             width,
             height,
             cells,
+            ..default
         }
     }
+
+    /// Generate a new `Grid` of a given `width` and `height`
+    /// It will be populated with a random distribution of Alive/Dead cells
+    /// The glyphs can be overriddne with `alive_glyph` and `dead_glyph`
+    pub fn new_random_custom_glyphs(
+        width: usize,
+        height: usize,
+        alive_glyph: char,
+        dead_glyph: char,
+    ) -> Self {
+        Grid {
+            width,
+            height,
+            cells: Self::generate_random_cells(width * height, alive_glyph, dead_glyph),
+            alive_glyph,
+            dead_glyph,
+        }
+    }
+    /// Re-generates the state of the `Grid` `cells` based on the rules of Conways game of life
     pub fn update_states(&mut self) -> u32 {
         let mut new_grid: Vec<CellState> = Vec::new();
         for (idx, &cell) in self.cells.iter().enumerate() {
@@ -146,21 +192,20 @@ impl Grid<CellState> {
         self.cells = new_grid;
         self.cells
             .iter()
-            .filter(|&&c| c == CellState::Alive)
+            .filter(|&&c| c == CellState::Alive(self.alive_glyph))
             .count() as u32
     }
-    /*
-    Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
-    Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
-    Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
-    Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
-     */
+    /// Gets the new state of the current cell based on the following rules:
+    /// - Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
+    /// - Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
+    /// - Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
+    /// - Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
     fn get_cell_state(&self, cell: &CellState, state: NeighbourState) -> CellState {
         match (&cell, state.alive) {
-            (CellState::Alive, 0..=1) => CellState::Dead,
-            (CellState::Alive, 2..=3) => CellState::Alive,
-            (CellState::Alive, 4..=8) => CellState::Dead,
-            (CellState::Dead, 3) => CellState::Alive,
+            (CellState::Alive(_), 0..=1) => CellState::Dead(self.dead_glyph),
+            (CellState::Alive(_), 2..=3) => CellState::Alive(self.alive_glyph),
+            (CellState::Alive(_), 4..=8) => CellState::Dead(self.dead_glyph),
+            (CellState::Dead(_), 3) => CellState::Alive(self.alive_glyph),
             (_, _) => *cell,
         }
     }
@@ -170,8 +215,8 @@ impl Grid<CellState> {
         for neighbour in self.get_neighbours(point).map(|p| self.try_get(p)) {
             match neighbour {
                 Some(c) => match c {
-                    CellState::Alive => alive += 1,
-                    CellState::Dead => dead += 1,
+                    CellState::Alive(_) => alive += 1,
+                    CellState::Dead(_) => dead += 1,
                 },
                 None => {
                     continue;
@@ -191,7 +236,15 @@ impl Grid<CellState> {
 
 impl Default for Grid<CellState> {
     fn default() -> Self {
-        Grid::new_empty(10, 10)
+        let size = 10 * 10;
+        let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead(' ')).collect();
+        Grid {
+            width: 10,
+            height: 10,
+            cells,
+            alive_glyph: 'X',
+            dead_glyph: ' ',
+        }
     }
 }
 
@@ -207,8 +260,9 @@ impl Display for Grid<CellState> {
     }
 }
 
+#[allow(dead_code)]
 impl<T: Debug> Grid<T> {
-    pub fn print(&self) {
+    fn print(&self) {
         println!("Grid {w}x{h}", w = &self.width, h = &self.height);
         for row in 0..self.height {
             println!(
@@ -238,7 +292,7 @@ mod tests {
     #[test]
     fn test_get_neighbours_state() {
         let mut g = Grid::new_empty(3, 3);
-        g.cells[1] = CellState::Alive;
+        g.cells[1] = CellState::Alive(g.alive_glyph);
         // x 0 x
         // x x x
         // x x x
@@ -258,17 +312,17 @@ mod tests {
     #[test]
     fn test_grid_display() {
         let mut g = Grid::new_empty(3, 3);
-        g.cells[4] = CellState::Alive;
+        g.cells[4] = CellState::Alive('X');
         let s = format!("{}", g);
-        assert_eq!(s, "💀💀💀\n💀😇💀\n💀💀💀\n".to_string());
+        assert_eq!(s, "   \n X \n   \n".to_string());
     }
 
     #[test]
     fn test_grid_debug() {
         let mut g = Grid::new_empty(3, 3);
-        g.cells[4] = CellState::Alive;
+        g.cells[4] = CellState::Alive('X');
         let s = format!("{:?}", g);
-        assert_eq!(s, "Grid { width: 3, height: 3, cells: [Dead, Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead] }".to_string());
+        assert_eq!(s, "Grid { width: 3, height: 3, cells: [Dead(' '), Dead(' '), Dead(' '), Dead(' '), Alive('X'), Dead(' '), Dead(' '), Dead(' '), Dead(' ')], dead_glyph: ' ', alive_glyph: 'X' }".to_string());
     }
 
     #[test]
@@ -282,23 +336,38 @@ mod tests {
         let g = Grid::new_empty(3, 3);
         // Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
         assert_eq!(
-            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 1, dead: 0 }),
-            CellState::Dead
+            g.get_cell_state(&CellState::Alive('X'), NeighbourState { alive: 1, dead: 0 }),
+            CellState::Dead(' ')
         );
         //Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
         assert_eq!(
-            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 3, dead: 0 }),
-            CellState::Alive
+            g.get_cell_state(&CellState::Alive('X'), NeighbourState { alive: 3, dead: 0 }),
+            CellState::Alive('X')
         );
         // Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
         assert_eq!(
-            g.get_cell_state(&CellState::Alive, NeighbourState { alive: 5, dead: 1 }),
-            CellState::Dead
+            g.get_cell_state(&CellState::Alive('X'), NeighbourState { alive: 5, dead: 1 }),
+            CellState::Dead(' ')
         );
         // Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
         assert_eq!(
-            g.get_cell_state(&CellState::Dead, NeighbourState { alive: 3, dead: 0 }),
-            CellState::Alive
+            g.get_cell_state(&CellState::Dead(' '), NeighbourState { alive: 3, dead: 0 }),
+            CellState::Alive('X')
         );
+    }
+
+    #[test]
+    fn test_new_random_custom_glyphs() {
+        let g = Grid::new_random_custom_glyphs(3, 3, 'A', 'D');
+        assert_eq!(g.cells.len(), 9);
+        let unexpected_states: Vec<&CellState> = g
+            .cells
+            .iter()
+            .filter(|c| {
+                let state = c.to_string();
+                state != "A" && state != "D"
+            })
+            .collect();
+        assert_eq!(unexpected_states.len(), 0);
     }
 }
