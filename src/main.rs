@@ -11,7 +11,7 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
-use game_of_life::{CellState, Grid};
+use gridlife::{CellState, Grid};
 
 #[derive(Debug, Default)]
 pub struct App {
