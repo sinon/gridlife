@@ -1,13 +1,15 @@
 [package]
-name = "game-of-life"
+name = "gridlife"
 version = "0.0.1"
 edition = "2021"
 license = "MIT"
-description = "An library to simulate a Conways Game of Life automaton"
+description = "An library to generate and simulate Conways Game of Life cellular automatons"
 readme = "README.md"
 homepage = "https://github.com/sinon/game-of-life"
 repository = "https://github.com/sinon/game-of-life"
 include = ["/src", "!/src/main.rs"]
+keywords = ["game of life", "conways", "celluar automaton"]
+categories = ["data-structures", "games"]
 
 [dependencies]
 crossterm = { version = "0.28.1", optional = true }
@@ -16,7 +18,7 @@ fastrand = { version = "2.3.0", features = ["js"] }
 
 
 [lib]
-name = "game_of_life"
+name = "gridlife"
 
 [features]
 build-binary = ["ratatui", "crossterm"]
