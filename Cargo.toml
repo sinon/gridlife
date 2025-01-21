@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/sinon/game-of-life"
 repository = "https://github.com/sinon/game-of-life"
 include = ["/src", "!/src/main.rs"]
-keywords = ["game of life", "conways", "celluar automaton"]
+keywords = ["gameoflife", "conways", "celluarautomaton"]
 categories = ["data-structures", "games"]
 
 [dependencies]
