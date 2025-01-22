@@ -1,6 +1,6 @@
 [package]
 name = "gridlife"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "An library to generate and simulate Conways Game of Life cellular automatons"

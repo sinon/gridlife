@@ -19,7 +19,7 @@ pub struct App {
     run: bool,
     exit: bool,
     cycles: u32,
-    population: u32,
+    population: usize,
     height: usize,
     width: usize,
 }
@@ -27,13 +27,12 @@ pub struct App {
 impl App {
     pub fn new(height: usize, width: usize) -> Self {
         let mut grid = Grid::new_empty(width, height);
-        let population = grid.update_states();
         App {
             grid,
             exit: false,
             run: false,
             cycles: 0,
-            population,
+            population: 0,
             height,
             width,
         }
@@ -79,7 +78,8 @@ impl App {
         }
     }
     fn cycle(&mut self) {
-        self.population = self.grid.update_states();
+        self.grid.update_states();
+        self.population = self.grid.population;
         self.cycles += 1;
     }
     fn exit(&mut self) {
@@ -93,7 +93,7 @@ impl App {
     }
     fn random_grid(&mut self) {
         self.grid = Grid::new_random(self.width, self.height);
-        self.population = self.grid.update_states();
+        self.grid.update_states();
         self.cycles = 0;
     }
 }

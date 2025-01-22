@@ -57,4 +57,25 @@ jobs:
         with:
           reporter: 'github-pr-check'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-  
+  semver:
+    runs-on: ubuntu-latest
+    name: semver
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: cargo-semver-checks
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+  doc:
+    runs-on: ubuntu-latest
+    name: nightly / doc
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install cargo-docs-rs
+        uses: dtolnay/install@cargo-docs-rs
+      - name: cargo docs-rs
+        run: cargo docs-rs 
