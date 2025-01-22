@@ -259,7 +259,7 @@ impl Grid<CellState> {
                     CellState::Dead(_) => dead += 1,
                 },
                 None => {
-                    continue;
+                    unreachable!("get_neighbours filters points using contains, try_get will always return Some case")
                 }
             }
         }
