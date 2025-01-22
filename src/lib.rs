@@ -97,17 +97,6 @@ struct NeighbourState {
 #[derive(Debug)]
 #[non_exhaustive]
 /// `Grid` holds the state for a Conways game of life
-/// ```
-/// use gridlife::Grid;
-/// let grid = Grid {
-///     width: 3,
-///     height: 3,
-///     cells: vec!['1', '1', '1', '0', '1', '1', '0', '0', '1'],
-///     dead_glyph: '1',
-///     alive_glyph: '0',
-///     population: 0
-/// };
-/// ```
 pub struct Grid<T> {
     /// The `width` of the grid to be created
     pub width: usize,
