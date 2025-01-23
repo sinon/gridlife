@@ -25,4 +25,5 @@ name = "gridlife"
 
 [[example]]
 name = "tui"
-path = "examples/tui/src/main.rs"
+path = "examples/tui/main.rs"
+test = true

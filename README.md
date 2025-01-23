@@ -8,7 +8,7 @@ Generate 2d `Grid` of given size that are empty or contain a random distribution
 
 `update_states` is then called on the `Grid` to generate the next grid state based on the rules of [Conway's Game of Life].
 
-Package also contains a Text User Interface (TUI) built using `ratatui` library, which can be used to run random simulations.
+Package also contains an example Text User Interface (TUI) leveraging `gridlife` with `ratatui`, which can be used to run random simulations.
 
 ## Run TUI
 

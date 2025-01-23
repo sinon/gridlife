@@ -255,7 +255,6 @@ impl Grid<CellState> {
         for neighbour in ORTHO_PLUS_DIR
             .into_iter()
             .map(move |d| point + d)
-            .filter(|p| self.contains(p))
             .map(|p| self.try_get(p))
         {
             match neighbour {
@@ -264,7 +263,8 @@ impl Grid<CellState> {
                     CellState::Dead(_) => dead += 1,
                 },
                 None => {
-                    unreachable!("get_neighbours filters points using contains, try_get will always return Some case")
+                    // Neighbour is outside the bounds of the grid
+                    continue;
                 }
             }
         }

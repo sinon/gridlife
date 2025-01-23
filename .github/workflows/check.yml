@@ -2,6 +2,7 @@
 # several checks:
 # - fmt: checks that the code is formatted according to rustfmt
 # - clippy: checks that the code does not contain any clippy warnings
+# - semver: checks that the code is adhering to semantic versioning
 # - doc: checks that the code can be documented without errors
 permissions:
   contents: read
