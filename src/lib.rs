@@ -4,6 +4,21 @@
 //! Library to manage the grid state for Conways game of life.
 //!
 //! See: <https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life>
+//!
+//! ```
+//! use gridlife::Grid;
+//! let mut grid = Grid::new_random(3, 3);
+//! let mut population = grid.population;
+//! // Run the rules of Game of Life until the population count stabalizes
+//! loop {
+//!     grid.update_states();
+//!     let next_pop = grid.population;
+//!     if next_pop == population {
+//!         break;
+//!     }
+//!     population = next_pop;
+//! }
+//! ```
 use std::{
     fmt::{self, Debug, Display},
     ops::{Add, Index},
@@ -80,6 +95,7 @@ struct NeighbourState {
     alive: i32,
 }
 #[derive(Debug)]
+#[non_exhaustive]
 /// `Grid` holds the state for a Conways game of life
 pub struct Grid<T> {
     /// The `width` of the grid to be created
@@ -92,6 +108,8 @@ pub struct Grid<T> {
     pub dead_glyph: char,
     /// What character glyph should be used to display an alive population
     pub alive_glyph: char,
+    /// Population of the grid i.e number of alive cells
+    pub population: usize,
 }
 
 impl<T> Grid<T> {
@@ -127,6 +145,10 @@ impl<T> Index<Point> for Grid<T> {
 impl Grid<CellState> {
     /// Create a new `Grid` of a given `width` and `height`.
     /// It will default to `X` for alive glyph and ` ` for dead glyph
+    /// ```
+    /// use gridlife::Grid;
+    /// let grid = Grid::new_empty(3, 3);
+    /// ```
     pub fn new_empty(width: usize, height: usize) -> Self {
         let size = width * height;
         let cells: Vec<CellState> = (0..size).map(|_| CellState::Dead(' ')).collect();
@@ -152,6 +174,10 @@ impl Grid<CellState> {
     /// Generate a new `Grid` of a given `width` and `height`
     /// It will be populated with a random distribution of Alive/Dead cells
     /// The default glyphs of `X` for alive and ` ` for dead.
+    /// ```
+    /// use gridlife::Grid;
+    /// let grid = Grid::new_random(3, 3);
+    /// ```
     pub fn new_random(width: usize, height: usize) -> Self {
         let default = Self::default();
         let cells: Vec<CellState> =
@@ -167,22 +193,32 @@ impl Grid<CellState> {
     /// Generate a new `Grid` of a given `width` and `height`
     /// It will be populated with a random distribution of Alive/Dead cells
     /// The glyphs can be overriddne with `alive_glyph` and `dead_glyph`
+    /// ```
+    /// use gridlife::Grid;
+    /// let grid = Grid::new_random_custom_glyphs(3, 3, '1', '0');
+    /// ```
     pub fn new_random_custom_glyphs(
         width: usize,
         height: usize,
         alive_glyph: char,
         dead_glyph: char,
     ) -> Self {
+        let cells = Self::generate_random_cells(width * height, alive_glyph, dead_glyph);
+        let population = cells
+            .iter()
+            .filter(|&&c| c == CellState::Alive(alive_glyph))
+            .count();
         Grid {
             width,
             height,
-            cells: Self::generate_random_cells(width * height, alive_glyph, dead_glyph),
+            cells,
             alive_glyph,
             dead_glyph,
+            population,
         }
     }
     /// Re-generates the state of the `Grid` `cells` based on the rules of Conways game of life
-    pub fn update_states(&mut self) -> u32 {
+    pub fn update_states(&mut self) -> &[CellState] {
         let mut new_grid: Vec<CellState> = Vec::new();
         for (idx, &cell) in self.cells.iter().enumerate() {
             let state = self.get_neighbours_state(self.pos(idx));
@@ -190,10 +226,14 @@ impl Grid<CellState> {
             new_grid.push(cellstate);
         }
         self.cells = new_grid;
+        self.population = self.calculate_population();
+        &self.cells
+    }
+    fn calculate_population(&self) -> usize {
         self.cells
             .iter()
             .filter(|&&c| c == CellState::Alive(self.alive_glyph))
-            .count() as u32
+            .count()
     }
     /// Gets the new state of the current cell based on the following rules:
     /// - Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
@@ -212,25 +252,23 @@ impl Grid<CellState> {
     fn get_neighbours_state(&self, point: Point) -> NeighbourState {
         let mut alive = 0;
         let mut dead = 0;
-        for neighbour in self.get_neighbours(point).map(|p| self.try_get(p)) {
+        for neighbour in ORTHO_PLUS_DIR
+            .into_iter()
+            .map(move |d| point + d)
+            .map(|p| self.try_get(p))
+        {
             match neighbour {
                 Some(c) => match c {
                     CellState::Alive(_) => alive += 1,
                     CellState::Dead(_) => dead += 1,
                 },
                 None => {
+                    // Neighbour is outside the bounds of the grid
                     continue;
                 }
             }
         }
         NeighbourState { alive, dead }
-    }
-
-    fn get_neighbours(&self, point: Point) -> impl Iterator<Item = Point> + use<'_> {
-        ORTHO_PLUS_DIR
-            .into_iter()
-            .map(move |d| point + d)
-            .filter(|p| self.contains(p))
     }
 }
 
@@ -244,6 +282,7 @@ impl Default for Grid<CellState> {
             cells,
             alive_glyph: 'X',
             dead_glyph: ' ',
+            population: 0,
         }
     }
 }
@@ -257,19 +296,6 @@ impl Display for Grid<CellState> {
             writeln!(f)?;
         }
         Ok(())
-    }
-}
-
-#[allow(dead_code)]
-impl<T: Debug> Grid<T> {
-    fn print(&self) {
-        println!("Grid {w}x{h}", w = &self.width, h = &self.height);
-        for row in 0..self.height {
-            println!(
-                "r{row}: {:?}",
-                &self.cells[row * self.width..(row + 1) * self.width]
-            );
-        }
     }
 }
 
@@ -322,7 +348,7 @@ mod tests {
         let mut g = Grid::new_empty(3, 3);
         g.cells[4] = CellState::Alive('X');
         let s = format!("{:?}", g);
-        assert_eq!(s, "Grid { width: 3, height: 3, cells: [Dead(' '), Dead(' '), Dead(' '), Dead(' '), Alive('X'), Dead(' '), Dead(' '), Dead(' '), Dead(' ')], dead_glyph: ' ', alive_glyph: 'X' }".to_string());
+        assert_eq!(s, "Grid { width: 3, height: 3, cells: [Dead(' '), Dead(' '), Dead(' '), Dead(' '), Alive('X'), Dead(' '), Dead(' '), Dead(' '), Dead(' ')], dead_glyph: ' ', alive_glyph: 'X', population: 0 }".to_string());
     }
 
     #[test]
