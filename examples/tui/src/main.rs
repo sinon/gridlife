@@ -26,7 +26,7 @@ pub struct App {
 
 impl App {
     pub fn new(height: usize, width: usize) -> Self {
-        let mut grid = Grid::new_empty(width, height);
+        let grid = Grid::new_empty(width, height);
         App {
             grid,
             exit: false,

@@ -252,7 +252,12 @@ impl Grid<CellState> {
     fn get_neighbours_state(&self, point: Point) -> NeighbourState {
         let mut alive = 0;
         let mut dead = 0;
-        for neighbour in self.get_neighbours(point).map(|p| self.try_get(p)) {
+        for neighbour in ORTHO_PLUS_DIR
+            .into_iter()
+            .map(move |d| point + d)
+            .filter(|p| self.contains(p))
+            .map(|p| self.try_get(p))
+        {
             match neighbour {
                 Some(c) => match c {
                     CellState::Alive(_) => alive += 1,
@@ -264,13 +269,6 @@ impl Grid<CellState> {
             }
         }
         NeighbourState { alive, dead }
-    }
-
-    fn get_neighbours(&self, point: Point) -> impl Iterator<Item = Point> + use<'_> {
-        ORTHO_PLUS_DIR
-            .into_iter()
-            .map(move |d| point + d)
-            .filter(|p| self.contains(p))
     }
 }
 
