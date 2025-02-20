@@ -1,6 +1,6 @@
 # Game of Life
 
-[![codecov](https://codecov.io/github/sinon/game-of-life/graph/badge.svg?token=5Y7PP6AC3K)](https://codecov.io/github/sinon/game-of-life)
+[![codecov](https://codecov.io/github/sinon/gridlife/graph/badge.svg?token=5Y7PP6AC3K)](https://codecov.io/github/sinon/gridlife)
 
 Implementation of [Conway's Game of Life].
 
